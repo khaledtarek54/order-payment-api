@@ -76,6 +76,8 @@ class PaymentController extends ApiController
      *
      * @urlParam order integer required The ID of the order to pay. Example: 1
      *
+     * @header Idempotency-Key A client-generated key (e.g. a UUID). Repeating a request with the same key returns the original payment instead of charging again. Example: 1f0a2b3c-4d5e-6f70-8a9b-0c1d2e3f4a5b
+     *
      * @bodyParam method string required The payment method. One of: credit_card, paypal. Example: credit_card
      *
      * @response 201 {"data":{"id":"9b1c...","order_id":1,"status":"successful","method":"credit_card","amount":"100.00","gateway_reference":"cc_abc123","created_at":"2026-06-23T12:00:00.000000Z"}}
@@ -93,6 +95,7 @@ class PaymentController extends ApiController
         $payment = $processPayment->execute(
             $order,
             PaymentMethod::from($request->validated()['method']),
+            $request->header('Idempotency-Key'),
         );
 
         return (new PaymentResource($payment))->response()->setStatusCode(201);

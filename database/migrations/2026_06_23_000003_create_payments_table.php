@@ -16,10 +16,14 @@ return new class extends Migration
             $table->decimal('amount', 12, 2);
             $table->string('gateway_reference')->nullable();
             $table->json('gateway_response')->nullable();
+            // Client-supplied Idempotency-Key; unique per order so a retried or
+            // double-submitted request can never create a second charge.
+            $table->string('idempotency_key')->nullable();
             $table->timestamps();
 
             // Both list paths order a single order's payments by recency.
             $table->index(['order_id', 'created_at']);
+            $table->unique(['order_id', 'idempotency_key']);
         });
     }
 

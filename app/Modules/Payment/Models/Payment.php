@@ -24,6 +24,7 @@ use Illuminate\Support\Carbon;
  * @property Money $amount
  * @property string|null $gateway_reference
  * @property array<string, mixed>|null $gateway_response
+ * @property string|null $idempotency_key
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -39,6 +40,7 @@ class Payment extends Model
         'amount',
         'gateway_reference',
         'gateway_response',
+        'idempotency_key',
     ];
 
     /**
