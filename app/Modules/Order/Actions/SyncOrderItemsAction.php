@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Modules\Order\Actions;
 
 use App\Modules\Order\Models\Order;
+use App\Support\ValueObjects\Money;
 
 /**
  * Replaces an order's line items and recomputes its total server-side.
  *
  * Shared by {@see CreateOrderAction} and {@see UpdateOrderAction}; always runs
  * inside the caller's transaction so a partial write can't leave a stale total.
+ * Money math is done in integer minor units (via {@see Money}) so summing many
+ * line items never accumulates floating-point error.
  */
 final class SyncOrderItemsAction
 {
@@ -19,20 +22,20 @@ final class SyncOrderItemsAction
      */
     public function execute(Order $order, array $items): void
     {
-        $total = 0.0;
+        $total = Money::zero();
 
         foreach ($items as $item) {
-            $lineTotal = round($item['quantity'] * $item['unit_price'], 2);
-            $total += $lineTotal;
+            $lineTotal = Money::fromDecimal($item['unit_price'])->times((int) $item['quantity']);
+            $total = $total->plus($lineTotal);
 
             $order->items()->create([
                 'product_name' => $item['product_name'],
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['unit_price'],
-                'line_total' => $lineTotal,
+                'line_total' => $lineTotal->toDecimalString(),
             ]);
         }
 
-        $order->update(['total' => round($total, 2)]);
+        $order->update(['total' => $total]);
     }
 }

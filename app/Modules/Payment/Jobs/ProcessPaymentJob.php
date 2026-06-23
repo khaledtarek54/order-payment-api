@@ -32,7 +32,7 @@ class ProcessPaymentJob implements ShouldQueue
         $response = $manager->for($payment->method)->charge(new GatewayChargeData(
             paymentId: (string) $payment->getKey(),
             orderId: (int) $payment->order_id,
-            amount: (float) $payment->amount,
+            amount: $payment->amount,
         ));
 
         $payment->update([

@@ -23,7 +23,7 @@ class PaymentResource extends JsonResource
             'order_id' => $this->order_id,
             'status' => $this->status->value,
             'method' => $this->method->value,
-            'amount' => $this->amount,
+            'amount' => $this->amount->toDecimalString(),
             'gateway_reference' => $this->gateway_reference,
             'created_at' => $this->created_at,
         ];

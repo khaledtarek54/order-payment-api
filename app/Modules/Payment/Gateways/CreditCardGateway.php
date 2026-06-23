@@ -28,8 +28,8 @@ class CreditCardGateway implements PaymentGatewayInterface
 
         return GatewayResponse::successful('cc_'.Str::lower(Str::random(24)), [
             'gateway' => $this->identifier(),
-            'amount' => $data->amount,
-            'currency' => $data->currency,
+            'amount' => $data->amount->toDecimalString(),
+            'currency' => $data->amount->currency,
         ]);
     }
 

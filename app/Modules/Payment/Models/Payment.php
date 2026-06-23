@@ -7,6 +7,8 @@ namespace App\Modules\Payment\Models;
 use App\Modules\Order\Models\Order;
 use App\Modules\Payment\Enums\PaymentMethod;
 use App\Modules\Payment\Enums\PaymentStatus;
+use App\Support\Casts\MoneyCast;
+use App\Support\ValueObjects\Money;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +21,7 @@ use Illuminate\Support\Carbon;
  * @property int $order_id
  * @property PaymentStatus $status
  * @property PaymentMethod $method
- * @property string $amount
+ * @property Money $amount
  * @property string|null $gateway_reference
  * @property array<string, mixed>|null $gateway_response
  * @property Carbon|null $created_at
@@ -47,7 +49,7 @@ class Payment extends Model
         return [
             'status' => PaymentStatus::class,
             'method' => PaymentMethod::class,
-            'amount' => 'decimal:2',
+            'amount' => MoneyCast::class,
             'gateway_response' => 'array',
         ];
     }
