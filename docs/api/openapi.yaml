@@ -1,0 +1,1655 @@
+openapi: 3.0.3
+info:
+  title: 'Laravel API Documentation'
+  description: ''
+  version: 1.0.0
+servers:
+  - url: 'http://order-payment-api.test'
+tags:
+  - name: Authentication
+    description: "\nRegister, authenticate, and manage the current user's JWT session."
+  - name: Endpoints
+    description: ''
+  - name: Orders
+    description: "\nCreate, browse, and manage the authenticated user's orders. Totals are always\ncomputed server-side from the supplied line items."
+  - name: Payments
+    description: ''
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: 'Register a new user.'
+      operationId: registerANewUser
+      description: 'Creates a user account and returns a freshly issued JWT.'
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Registration successful.'
+                  data:
+                    user:
+                      id: 1
+                      name: 'Jane Doe'
+                      email: jane@example.com
+                      created_at: '2026-06-23T00:00:00.000000Z'
+                    access_token: eyJ0eXAi...
+                    token_type: bearer
+                    expires_in: 3600
+                properties:
+                  message:
+                    type: string
+                    example: 'Registration successful.'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: 'Jane Doe'
+                          email:
+                            type: string
+                            example: jane@example.com
+                          created_at:
+                            type: string
+                            example: '2026-06-23T00:00:00.000000Z'
+                      access_token:
+                        type: string
+                        example: eyJ0eXAi...
+                      token_type:
+                        type: string
+                        example: bearer
+                      expires_in:
+                        type: integer
+                        example: 3600
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This email address is already registered.'
+                  errors:
+                    email:
+                      - 'This email address is already registered.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This email address is already registered.'
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - 'This email address is already registered.'
+                        items:
+                          type: string
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: "The user's full name."
+                  example: 'Jane Doe'
+                email:
+                  type: string
+                  description: 'A unique email address.'
+                  example: jane@example.com
+                password:
+                  type: string
+                  description: 'Minimum 8 characters.'
+                  example: secret123
+                password_confirmation:
+                  type: string
+                  description: 'Must match the password.'
+                  example: secret123
+              required:
+                - name
+                - email
+                - password
+                - password_confirmation
+      security: []
+  /api/v1/auth/login:
+    post:
+      summary: 'Log in an existing user.'
+      operationId: logInAnExistingUser
+      description: 'Validates credentials and returns a JWT on success.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Login successful.'
+                  data:
+                    user:
+                      id: 1
+                      name: 'Jane Doe'
+                      email: jane@example.com
+                      created_at: '2026-06-23T00:00:00.000000Z'
+                    access_token: eyJ0eXAi...
+                    token_type: bearer
+                    expires_in: 3600
+                properties:
+                  message:
+                    type: string
+                    example: 'Login successful.'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: 'Jane Doe'
+                          email:
+                            type: string
+                            example: jane@example.com
+                          created_at:
+                            type: string
+                            example: '2026-06-23T00:00:00.000000Z'
+                      access_token:
+                        type: string
+                        example: eyJ0eXAi...
+                      token_type:
+                        type: string
+                        example: bearer
+                      expires_in:
+                        type: integer
+                        example: 3600
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Invalid credentials.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Invalid credentials.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'A valid email address is required.'
+                  errors:
+                    email:
+                      - 'A valid email address is required.'
+                properties:
+                  message:
+                    type: string
+                    example: 'A valid email address is required.'
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - 'A valid email address is required.'
+                        items:
+                          type: string
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: "The user's email address."
+                  example: jane@example.com
+                password:
+                  type: string
+                  description: "The user's password."
+                  example: secret123
+              required:
+                - email
+                - password
+      security: []
+  /api/v1/auth/me:
+    get:
+      summary: 'Get the authenticated user.'
+      operationId: getTheAuthenticatedUser
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 1
+                    name: 'Jane Doe'
+                    email: jane@example.com
+                    created_at: '2026-06-23T00:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 'Jane Doe'
+                      email:
+                        type: string
+                        example: jane@example.com
+                      created_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+      tags:
+        - Authentication
+  /api/v1/auth/logout:
+    post:
+      summary: 'Log out the authenticated user.'
+      operationId: logOutTheAuthenticatedUser
+      description: 'Invalidates the current JWT.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Successfully logged out.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Successfully logged out.'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+      tags:
+        - Authentication
+  /api/v1/auth/refresh:
+    post:
+      summary: "Refresh the authenticated user's token."
+      operationId: refreshTheAuthenticatedUsersToken
+      description: 'Issues a new JWT and invalidates the previous one.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Token refreshed.'
+                  data:
+                    user:
+                      id: 1
+                      name: 'Jane Doe'
+                      email: jane@example.com
+                      created_at: '2026-06-23T00:00:00.000000Z'
+                    access_token: eyJ0eXAi...
+                    token_type: bearer
+                    expires_in: 3600
+                properties:
+                  message:
+                    type: string
+                    example: 'Token refreshed.'
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: 'Jane Doe'
+                          email:
+                            type: string
+                            example: jane@example.com
+                          created_at:
+                            type: string
+                            example: '2026-06-23T00:00:00.000000Z'
+                      access_token:
+                        type: string
+                        example: eyJ0eXAi...
+                      token_type:
+                        type: string
+                        example: bearer
+                      expires_in:
+                        type: integer
+                        example: 3600
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+      tags:
+        - Authentication
+  /api/v1/health:
+    get:
+      summary: ''
+      operationId: getApiV1Health
+      description: ''
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    status: ok
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: ok
+      tags:
+        - Endpoints
+      security: []
+  /api/v1/orders:
+    get:
+      summary: 'List orders.'
+      operationId: listOrders
+      description: "Returns a paginated list of the authenticated user's orders. Supports\nfiltering (filter[status]) and sorting (sort=-created_at,total,status)."
+      parameters:
+        -
+          in: query
+          name: 'filter[status]'
+          description: 'Filter by status (pending, confirmed, cancelled).'
+          example: confirmed
+          required: false
+          schema:
+            type: string
+            description: 'Filter by status (pending, confirmed, cancelled).'
+            example: confirmed
+        -
+          in: query
+          name: sort
+          description: 'Sort by created_at, total or status (prefix with - to reverse).'
+          example: '-created_at'
+          required: false
+          schema:
+            type: string
+            description: 'Sort by created_at, total or status (prefix with - to reverse).'
+            example: '-created_at'
+        -
+          in: query
+          name: per_page
+          description: 'Items per page (max 100).'
+          example: 15
+          required: false
+          schema:
+            type: integer
+            description: 'Items per page (max 100).'
+            example: 15
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 1
+                      status: pending
+                      total: '49.98'
+                      notes: null
+                      items:
+                        -
+                          id: 1
+                          product_name: Widget
+                          quantity: 2
+                          unit_price: '24.99'
+                          line_total: '49.98'
+                      created_at: '2026-06-23T00:00:00.000000Z'
+                      updated_at: '2026-06-23T00:00:00.000000Z'
+                  links:
+                    first: ...
+                    last: ...
+                    prev: null
+                    next: null
+                  meta:
+                    current_page: 1
+                    last_page: 1
+                    per_page: 15
+                    total: 1
+                properties:
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        status: pending
+                        total: '49.98'
+                        notes: null
+                        items:
+                          - id: 1
+                            product_name: Widget
+                            quantity: 2
+                            unit_price: '24.99'
+                            line_total: '49.98'
+                        created_at: '2026-06-23T00:00:00.000000Z'
+                        updated_at: '2026-06-23T00:00:00.000000Z'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        status:
+                          type: string
+                          example: pending
+                        total:
+                          type: string
+                          example: '49.98'
+                        notes:
+                          type: string
+                          example: null
+                          nullable: true
+                        items:
+                          type: array
+                          example:
+                            - id: 1
+                              product_name: Widget
+                              quantity: 2
+                              unit_price: '24.99'
+                              line_total: '49.98'
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              product_name:
+                                type: string
+                                example: Widget
+                              quantity:
+                                type: integer
+                                example: 2
+                              unit_price:
+                                type: string
+                                example: '24.99'
+                              line_total:
+                                type: string
+                                example: '49.98'
+                        created_at:
+                          type: string
+                          example: '2026-06-23T00:00:00.000000Z'
+                        updated_at:
+                          type: string
+                          example: '2026-06-23T00:00:00.000000Z'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        example: ...
+                      last:
+                        type: string
+                        example: ...
+                      prev:
+                        type: string
+                        example: null
+                        nullable: true
+                      next:
+                        type: string
+                        example: null
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                        example: 1
+                      last_page:
+                        type: integer
+                        example: 1
+                      per_page:
+                        type: integer
+                        example: 15
+                      total:
+                        type: integer
+                        example: 1
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+      tags:
+        - Orders
+    post:
+      summary: 'Create an order.'
+      operationId: createAnOrder
+      description: "Persists a new order with its line items. The order total is computed\nserver-side; any client-supplied total is ignored."
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 1
+                    status: pending
+                    total: '49.98'
+                    notes: null
+                    items:
+                      -
+                        id: 1
+                        product_name: Widget
+                        quantity: 2
+                        unit_price: '24.99'
+                        line_total: '49.98'
+                    created_at: '2026-06-23T00:00:00.000000Z'
+                    updated_at: '2026-06-23T00:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: pending
+                      total:
+                        type: string
+                        example: '49.98'
+                      notes:
+                        type: string
+                        example: null
+                        nullable: true
+                      items:
+                        type: array
+                        example:
+                          - id: 1
+                            product_name: Widget
+                            quantity: 2
+                            unit_price: '24.99'
+                            line_total: '49.98'
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            product_name:
+                              type: string
+                              example: Widget
+                            quantity:
+                              type: integer
+                              example: 2
+                            unit_price:
+                              type: string
+                              example: '24.99'
+                            line_total:
+                              type: string
+                              example: '49.98'
+                      created_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+                      updated_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'At least one order item is required.'
+                  errors:
+                    items:
+                      - 'At least one order item is required.'
+                properties:
+                  message:
+                    type: string
+                    example: 'At least one order item is required.'
+                  errors:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        example:
+                          - 'At least one order item is required.'
+                        items:
+                          type: string
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: 'An optional note for the order.'
+                  example: 'Leave at the front desk.'
+                  nullable: true
+                items:
+                  type: array
+                  description: 'The order line items.'
+                  example:
+                    -
+                      product_name: Widget
+                      quantity: 2
+                      unit_price: 24.99
+                  items:
+                    type: object
+                    properties:
+                      product_name:
+                        type: string
+                        description: 'The product name.'
+                        example: Widget
+                      quantity:
+                        type: integer
+                        description: 'The quantity (min 1).'
+                        example: 2
+                      unit_price:
+                        type: number
+                        description: 'The unit price (min 0).'
+                        example: 24.99
+                    required:
+                      - product_name
+                      - quantity
+                      - unit_price
+              required:
+                - items
+  '/api/v1/orders/{id}':
+    get:
+      summary: 'Show an order.'
+      operationId: showAnOrder
+      description: 'Returns a single order with its items and payments.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 1
+                    status: pending
+                    total: '49.98'
+                    notes: null
+                    items:
+                      -
+                        id: 1
+                        product_name: Widget
+                        quantity: 2
+                        unit_price: '24.99'
+                        line_total: '49.98'
+                    created_at: '2026-06-23T00:00:00.000000Z'
+                    updated_at: '2026-06-23T00:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: pending
+                      total:
+                        type: string
+                        example: '49.98'
+                      notes:
+                        type: string
+                        example: null
+                        nullable: true
+                      items:
+                        type: array
+                        example:
+                          - id: 1
+                            product_name: Widget
+                            quantity: 2
+                            unit_price: '24.99'
+                            line_total: '49.98'
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            product_name:
+                              type: string
+                              example: Widget
+                            quantity:
+                              type: integer
+                              example: 2
+                            unit_price:
+                              type: string
+                              example: '24.99'
+                            line_total:
+                              type: string
+                              example: '49.98'
+                      created_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+                      updated_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Resource not found.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Resource not found.'
+      tags:
+        - Orders
+    put:
+      summary: 'Update an order.'
+      operationId: updateAnOrder
+      description: "Updates the notes and/or replaces the line items. When items are provided\nthe total is recomputed server-side."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 1
+                    status: pending
+                    total: '10.00'
+                    notes: 'Updated note.'
+                    items:
+                      -
+                        id: 2
+                        product_name: Gadget
+                        quantity: 1
+                        unit_price: '10.00'
+                        line_total: '10.00'
+                    created_at: '2026-06-23T00:00:00.000000Z'
+                    updated_at: '2026-06-23T00:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: pending
+                      total:
+                        type: string
+                        example: '10.00'
+                      notes:
+                        type: string
+                        example: 'Updated note.'
+                      items:
+                        type: array
+                        example:
+                          - id: 2
+                            product_name: Gadget
+                            quantity: 1
+                            unit_price: '10.00'
+                            line_total: '10.00'
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 2
+                            product_name:
+                              type: string
+                              example: Gadget
+                            quantity:
+                              type: integer
+                              example: 1
+                            unit_price:
+                              type: string
+                              example: '10.00'
+                            line_total:
+                              type: string
+                              example: '10.00'
+                      created_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+                      updated_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'At least one order item is required when updating items.'
+                  errors:
+                    items:
+                      - 'At least one order item is required when updating items.'
+                properties:
+                  message:
+                    type: string
+                    example: 'At least one order item is required when updating items.'
+                  errors:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        example:
+                          - 'At least one order item is required when updating items.'
+                        items:
+                          type: string
+      tags:
+        - Orders
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  description: 'An optional note for the order.'
+                  example: 'Updated note.'
+                  nullable: true
+                items:
+                  type: array
+                  description: 'Optional replacement line items.'
+                  example:
+                    -
+                      product_name: Gadget
+                      quantity: 1
+                      unit_price: 10
+                  items:
+                    type: object
+                    properties:
+                      product_name:
+                        type: string
+                        description: 'The product name.'
+                        example: Gadget
+                      quantity:
+                        type: integer
+                        description: 'The quantity (min 1).'
+                        example: 1
+                      unit_price:
+                        type: number
+                        description: 'The unit price (min 0).'
+                        example: 10.0
+                    required:
+                      - product_name
+                      - quantity
+                      - unit_price
+    delete:
+      summary: 'Delete an order.'
+      operationId: deleteAnOrder
+      description: "Permanently removes an order. Orders that already have payments cannot be\ndeleted."
+      parameters: []
+      responses:
+        204:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {}
+                properties: {}
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        409:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Order cannot be deleted because it has associated payments.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Order cannot be deleted because it has associated payments.'
+      tags:
+        - Orders
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the order.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: order
+        description: 'The order ID.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  '/api/v1/orders/{order_id}/status':
+    patch:
+      summary: "Change an order's status."
+      operationId: changeAnOrdersStatus
+      description: "Transitions the order to the target status. Invalid transitions (for\nexample confirming a cancelled order) are rejected."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 1
+                    status: confirmed
+                    total: '49.98'
+                    notes: null
+                    created_at: '2026-06-23T00:00:00.000000Z'
+                    updated_at: '2026-06-23T00:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: confirmed
+                      total:
+                        type: string
+                        example: '49.98'
+                      notes:
+                        type: string
+                        example: null
+                        nullable: true
+                      created_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+                      updated_at:
+                        type: string
+                        example: '2026-06-23T00:00:00.000000Z'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: Unauthenticated.
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: "Cannot change order status from 'cancelled' to 'confirmed'."
+                properties:
+                  message:
+                    type: string
+                    example: "Cannot change order status from 'cancelled' to 'confirmed'."
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: 'The target status (pending, confirmed, cancelled).'
+                  example: confirmed
+              required:
+                - status
+    parameters:
+      -
+        in: path
+        name: order_id
+        description: 'The ID of the order.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: order
+        description: 'The order ID.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/v1/payments:
+    get:
+      summary: 'List payments'
+      operationId: listPayments
+      description: "List all payments belonging to the authenticated user's orders, paginated."
+      parameters:
+        -
+          in: query
+          name: per_page
+          description: 'Number of results per page (max 100).'
+          example: 15
+          required: false
+          schema:
+            type: integer
+            description: 'Number of results per page (max 100).'
+            example: 15
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 9b1c...
+                      order_id: 1
+                      status: successful
+                      method: credit_card
+                      amount: '100.00'
+                      gateway_reference: cc_abc123
+                      created_at: '2026-06-23T12:00:00.000000Z'
+                  links:
+                    first: ...
+                    last: ...
+                    prev: null
+                    next: null
+                  meta:
+                    current_page: 1
+                    per_page: 15
+                    total: 1
+                properties:
+                  data:
+                    type: array
+                    example:
+                      - id: 9b1c...
+                        order_id: 1
+                        status: successful
+                        method: credit_card
+                        amount: '100.00'
+                        gateway_reference: cc_abc123
+                        created_at: '2026-06-23T12:00:00.000000Z'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: 9b1c...
+                        order_id:
+                          type: integer
+                          example: 1
+                        status:
+                          type: string
+                          example: successful
+                        method:
+                          type: string
+                          example: credit_card
+                        amount:
+                          type: string
+                          example: '100.00'
+                        gateway_reference:
+                          type: string
+                          example: cc_abc123
+                        created_at:
+                          type: string
+                          example: '2026-06-23T12:00:00.000000Z'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        example: ...
+                      last:
+                        type: string
+                        example: ...
+                      prev:
+                        type: string
+                        example: null
+                        nullable: true
+                      next:
+                        type: string
+                        example: null
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                        example: 1
+                      per_page:
+                        type: integer
+                        example: 15
+                      total:
+                        type: integer
+                        example: 1
+      tags:
+        - Payments
+  '/api/v1/payments/{id}':
+    get:
+      summary: 'Show a payment'
+      operationId: showAPayment
+      description: "Retrieve a single payment belonging to one of the authenticated user's orders."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 9b1c...
+                    order_id: 1
+                    status: successful
+                    method: credit_card
+                    amount: '100.00'
+                    gateway_reference: cc_abc123
+                    created_at: '2026-06-23T12:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 9b1c...
+                      order_id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: successful
+                      method:
+                        type: string
+                        example: credit_card
+                      amount:
+                        type: string
+                        example: '100.00'
+                      gateway_reference:
+                        type: string
+                        example: cc_abc123
+                      created_at:
+                        type: string
+                        example: '2026-06-23T12:00:00.000000Z'
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'No query results for model [App\Modules\Payment\Models\Payment].'
+                properties:
+                  message:
+                    type: string
+                    example: 'No query results for model [App\Modules\Payment\Models\Payment].'
+      tags:
+        - Payments
+    parameters:
+      -
+        in: path
+        name: id
+        description: 'The ID of the payment.'
+        example: 019ef57e-1ba4-70e8-8039-df492eebf11d
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: payment
+        description: 'The UUID of the payment.'
+        example: 9b1c2d3e-4f5a-6b7c-8d9e-0f1a2b3c4d5e
+        required: true
+        schema:
+          type: string
+  '/api/v1/orders/{order_id}/payments':
+    get:
+      summary: 'List payments for an order'
+      operationId: listPaymentsForAnOrder
+      description: 'List all payments for a specific order owned by the authenticated user, paginated.'
+      parameters:
+        -
+          in: query
+          name: per_page
+          description: 'Number of results per page (max 100).'
+          example: 15
+          required: false
+          schema:
+            type: integer
+            description: 'Number of results per page (max 100).'
+            example: 15
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    -
+                      id: 9b1c...
+                      order_id: 1
+                      status: successful
+                      method: credit_card
+                      amount: '100.00'
+                      gateway_reference: cc_abc123
+                      created_at: '2026-06-23T12:00:00.000000Z'
+                  links:
+                    first: ...
+                    last: ...
+                    prev: null
+                    next: null
+                  meta:
+                    current_page: 1
+                    per_page: 15
+                    total: 1
+                properties:
+                  data:
+                    type: array
+                    example:
+                      - id: 9b1c...
+                        order_id: 1
+                        status: successful
+                        method: credit_card
+                        amount: '100.00'
+                        gateway_reference: cc_abc123
+                        created_at: '2026-06-23T12:00:00.000000Z'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: 9b1c...
+                        order_id:
+                          type: integer
+                          example: 1
+                        status:
+                          type: string
+                          example: successful
+                        method:
+                          type: string
+                          example: credit_card
+                        amount:
+                          type: string
+                          example: '100.00'
+                        gateway_reference:
+                          type: string
+                          example: cc_abc123
+                        created_at:
+                          type: string
+                          example: '2026-06-23T12:00:00.000000Z'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        example: ...
+                      last:
+                        type: string
+                        example: ...
+                      prev:
+                        type: string
+                        example: null
+                        nullable: true
+                      next:
+                        type: string
+                        example: null
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                        example: 1
+                      per_page:
+                        type: integer
+                        example: 15
+                      total:
+                        type: integer
+                        example: 1
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+      tags:
+        - Payments
+    post:
+      summary: 'Process a payment'
+      operationId: processAPayment
+      description: "Process a payment for a confirmed order. The order must be confirmed before\nit can be paid, otherwise a 409 is returned."
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 9b1c...
+                    order_id: 1
+                    status: successful
+                    method: credit_card
+                    amount: '100.00'
+                    gateway_reference: cc_abc123
+                    created_at: '2026-06-23T12:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 9b1c...
+                      order_id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: successful
+                      method:
+                        type: string
+                        example: credit_card
+                      amount:
+                        type: string
+                        example: '100.00'
+                      gateway_reference:
+                        type: string
+                        example: cc_abc123
+                      created_at:
+                        type: string
+                        example: '2026-06-23T12:00:00.000000Z'
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        409:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The order must be confirmed before it can be paid.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The order must be confirmed before it can be paid.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The selected payment method is not supported.'
+                  errors:
+                    method:
+                      - 'The selected payment method is not supported.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The selected payment method is not supported.'
+                  errors:
+                    type: object
+                    properties:
+                      method:
+                        type: array
+                        example:
+                          - 'The selected payment method is not supported.'
+                        items:
+                          type: string
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method:
+                  type: string
+                  description: 'The payment method. One of: credit_card, paypal.'
+                  example: credit_card
+              required:
+                - method
+    parameters:
+      -
+        in: path
+        name: order_id
+        description: 'The ID of the order.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: order
+        description: 'The ID of the order.'
+        example: 1
+        required: true
+        schema:
+          type: integer

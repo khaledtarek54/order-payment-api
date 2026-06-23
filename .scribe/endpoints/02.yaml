@@ -1,0 +1,620 @@
+name: Orders
+description: |-
+
+  Create, browse, and manage the authenticated user's orders. Totals are always
+  computed server-side from the supplied line items.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/orders
+    metadata:
+      custom: []
+      groupName: Orders
+      groupDescription: |-
+
+        Create, browse, and manage the authenticated user's orders. Totals are always
+        computed server-side from the supplied line items.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List orders.'
+      description: |-
+        Returns a paginated list of the authenticated user's orders. Supports
+        filtering (filter[status]) and sorting (sort=-created_at,total,status).
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      'filter[status]':
+        custom: []
+        name: 'filter[status]'
+        description: 'Filter by status (pending, confirmed, cancelled).'
+        required: false
+        example: confirmed
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Sort by created_at, total or status (prefix with - to reverse).'
+        required: false
+        example: '-created_at'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Items per page (max 100).'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      'filter[status]': confirmed
+      sort: '-created_at'
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":[{"id":1,"status":"pending","total":"49.98","notes":null,"items":[{"id":1,"product_name":"Widget","quantity":2,"unit_price":"24.99","line_total":"49.98"}],"created_at":"2026-06-23T00:00:00.000000Z","updated_at":"2026-06-23T00:00:00.000000Z"}],"links":{"first":"...","last":"...","prev":null,"next":null},"meta":{"current_page":1,"last_page":1,"per_page":15,"total":1}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/orders
+    metadata:
+      custom: []
+      groupName: Orders
+      groupDescription: |-
+
+        Create, browse, and manage the authenticated user's orders. Totals are always
+        computed server-side from the supplied line items.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create an order.'
+      description: |-
+        Persists a new order with its line items. The order total is computed
+        server-side; any client-supplied total is ignored.
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      notes:
+        custom: []
+        name: notes
+        description: 'An optional note for the order.'
+        required: false
+        example: 'Leave at the front desk.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      items:
+        custom: []
+        name: items
+        description: 'The order line items.'
+        required: true
+        example:
+          -
+            product_name: Widget
+            quantity: 2
+            unit_price: 24.99
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].product_name':
+        custom: []
+        name: 'items[].product_name'
+        description: 'The product name.'
+        required: true
+        example: Widget
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].quantity':
+        custom: []
+        name: 'items[].quantity'
+        description: 'The quantity (min 1).'
+        required: true
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].unit_price':
+        custom: []
+        name: 'items[].unit_price'
+        description: 'The unit price (min 0).'
+        required: true
+        example: 24.99
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      notes: 'Leave at the front desk.'
+      items:
+        -
+          product_name: Widget
+          quantity: 2
+          unit_price: 24.99
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"data":{"id":1,"status":"pending","total":"49.98","notes":null,"items":[{"id":1,"product_name":"Widget","quantity":2,"unit_price":"24.99","line_total":"49.98"}],"created_at":"2026-06-23T00:00:00.000000Z","updated_at":"2026-06-23T00:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message":"At least one order item is required.","errors":{"items":["At least one order item is required."]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/orders/{id}'
+    metadata:
+      custom: []
+      groupName: Orders
+      groupDescription: |-
+
+        Create, browse, and manage the authenticated user's orders. Totals are always
+        computed server-side from the supplied line items.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Show an order.'
+      description: 'Returns a single order with its items and payments.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'The order ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      order: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":1,"status":"pending","total":"49.98","notes":null,"items":[{"id":1,"product_name":"Widget","quantity":2,"unit_price":"24.99","line_total":"49.98"}],"created_at":"2026-06-23T00:00:00.000000Z","updated_at":"2026-06-23T00:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"message":"This action is unauthorized."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"message":"Resource not found."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/orders/{id}'
+    metadata:
+      custom: []
+      groupName: Orders
+      groupDescription: |-
+
+        Create, browse, and manage the authenticated user's orders. Totals are always
+        computed server-side from the supplied line items.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update an order.'
+      description: |-
+        Updates the notes and/or replaces the line items. When items are provided
+        the total is recomputed server-side.
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'The order ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      order: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      notes:
+        custom: []
+        name: notes
+        description: 'An optional note for the order.'
+        required: false
+        example: 'Updated note.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      items:
+        custom: []
+        name: items
+        description: 'Optional replacement line items.'
+        required: false
+        example:
+          -
+            product_name: Gadget
+            quantity: 1
+            unit_price: 10
+        type: 'object[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].product_name':
+        custom: []
+        name: 'items[].product_name'
+        description: 'The product name.'
+        required: true
+        example: Gadget
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].quantity':
+        custom: []
+        name: 'items[].quantity'
+        description: 'The quantity (min 1).'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].unit_price':
+        custom: []
+        name: 'items[].unit_price'
+        description: 'The unit price (min 0).'
+        required: true
+        example: 10.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      notes: 'Updated note.'
+      items:
+        -
+          product_name: Gadget
+          quantity: 1
+          unit_price: 10
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":1,"status":"pending","total":"10.00","notes":"Updated note.","items":[{"id":2,"product_name":"Gadget","quantity":1,"unit_price":"10.00","line_total":"10.00"}],"created_at":"2026-06-23T00:00:00.000000Z","updated_at":"2026-06-23T00:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"message":"This action is unauthorized."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message":"At least one order item is required when updating items.","errors":{"items":["At least one order item is required when updating items."]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/orders/{id}'
+    metadata:
+      custom: []
+      groupName: Orders
+      groupDescription: |-
+
+        Create, browse, and manage the authenticated user's orders. Totals are always
+        computed server-side from the supplied line items.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete an order.'
+      description: |-
+        Permanently removes an order. Orders that already have payments cannot be
+        deleted.
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ID of the order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'The order ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      order: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 204
+        content: '{}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"message":"This action is unauthorized."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 409
+        content: '{"message":"Order cannot be deleted because it has associated payments."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PATCH
+    uri: 'api/v1/orders/{order_id}/status'
+    metadata:
+      custom: []
+      groupName: Orders
+      groupDescription: |-
+
+        Transition an order between its lifecycle statuses.
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Change an order's status."
+      description: |-
+        Transitions the order to the target status. Invalid transitions (for
+        example confirming a cancelled order) are rejected.
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      order_id:
+        custom: []
+        name: order_id
+        description: 'The ID of the order.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'The order ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      order_id: 1
+      order: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      status:
+        custom: []
+        name: status
+        description: 'The target status (pending, confirmed, cancelled).'
+        required: true
+        example: confirmed
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      status: confirmed
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"data":{"id":1,"status":"confirmed","total":"49.98","notes":null,"created_at":"2026-06-23T00:00:00.000000Z","updated_at":"2026-06-23T00:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"message":"This action is unauthorized."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"message":"Cannot change order status from ''cancelled'' to ''confirmed''."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
