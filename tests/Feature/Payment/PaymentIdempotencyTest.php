@@ -7,6 +7,7 @@ use App\Modules\Payment\Enums\PaymentStatus;
 use App\Modules\Payment\Gateways\PaymentGatewayManager;
 use App\Modules\Payment\Jobs\ProcessPaymentJob;
 use App\Modules\Payment\Models\Payment;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function (): void {
     config()->set('payments.gateways.credit_card.key', 'test-key');
@@ -48,6 +49,30 @@ it('replays the original payment even after the order has advanced to paid', fun
         ->postJson("/api/v1/orders/{$order->getKey()}/payments", ['method' => 'credit_card'])
         ->assertCreated()
         ->assertJsonPath('data.id', $first->json('data.id'));
+});
+
+it('does not create a second charge for a duplicate request without an Idempotency-Key', function (): void {
+    $user = actingAsUser();
+    $order = Order::factory()->confirmed()->for($user)->create(['total' => 100.00]);
+
+    $first = $this->postJson("/api/v1/orders/{$order->getKey()}/payments", ['method' => 'credit_card'])->assertCreated();
+    $second = $this->postJson("/api/v1/orders/{$order->getKey()}/payments", ['method' => 'credit_card'])->assertCreated();
+
+    // No key, yet the order still ends up with exactly one payment.
+    expect($second->json('data.id'))->toBe($first->json('data.id'));
+    $this->assertDatabaseCount('payments', 1);
+});
+
+it('queues the gateway charge and returns a pending payment (the async contract)', function (): void {
+    Queue::fake();
+    $user = actingAsUser();
+    $order = Order::factory()->confirmed()->for($user)->create(['total' => 100.00]);
+
+    $this->postJson("/api/v1/orders/{$order->getKey()}/payments", ['method' => 'credit_card'])
+        ->assertCreated()
+        ->assertJsonPath('data.status', 'pending');
+
+    Queue::assertPushed(ProcessPaymentJob::class, 1);
 });
 
 it('does not re-charge a payment that is no longer pending (retry/redelivery guard)', function (): void {

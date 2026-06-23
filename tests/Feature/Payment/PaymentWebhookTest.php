@@ -91,6 +91,34 @@ it('is idempotent: a redelivered webhook does not change an already-settled paym
     expect($payment->fresh()->status)->toBe(PaymentStatus::Successful);
 });
 
+it('will not settle a credit_card payment via a paypal-signed webhook (gateway isolation)', function (): void {
+    config()->set('payments.gateways.paypal.webhook_secret', 'pp_secret');
+    $payment = pendingPaymentWithReference('cc_ref_777'); // a credit_card payment
+
+    $payload = ['reference' => 'cc_ref_777', 'status' => 'successful'];
+    $content = (string) json_encode($payload);
+    $sig = hash_hmac('sha256', $content, 'pp_secret');
+
+    // Validly signed for paypal, but the reference belongs to a credit_card payment.
+    $this->call('POST', '/api/v1/payments/webhook/paypal', [], [], [],
+        ['HTTP_X_SIGNATURE' => $sig, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'], $content)
+        ->assertStatus(202);
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Pending);
+});
+
+it('rejects a valid signature submitted with a different body (byte-exact verification)', function (): void {
+    pendingPaymentWithReference('cc_ref_777');
+
+    $signed = (string) json_encode(['reference' => 'cc_ref_777', 'status' => 'successful']);
+    $sig = hash_hmac('sha256', $signed, WEBHOOK_SECRET);
+    $tampered = (string) json_encode(['reference' => 'cc_ref_777', 'status' => 'failed']);
+
+    $this->call('POST', '/api/v1/payments/webhook/credit_card', [], [], [],
+        ['HTTP_X_SIGNATURE' => $sig, 'HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'], $tampered)
+        ->assertStatus(401);
+});
+
 it('validates the webhook status (signature still required)', function (): void {
     pendingPaymentWithReference('cc_ref_777');
 

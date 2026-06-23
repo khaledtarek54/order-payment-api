@@ -27,12 +27,29 @@ final readonly class Money implements JsonSerializable, Stringable
     }
 
     /**
-     * Build from a major-unit amount (e.g. 24.99). The value is rounded to the
-     * nearest minor unit immediately, so all later math stays in integers.
+     * Build from a major-unit amount (e.g. 24.99). Parsed via string arithmetic
+     * — never `(float) * 100` — so binary representation error can't make e.g.
+     * 1.005 round down to 1.00. Sub-cent precision is rounded half-up to the
+     * nearest cent; all later math then stays in integers.
      */
     public static function fromDecimal(int|float|string $amount, string $currency = 'USD'): self
     {
-        return new self((int) round(((float) $amount) * 100), $currency);
+        // Render floats with fixed precision (no scientific notation) so we can
+        // parse the intended decimal rather than its raw IEEE-754 expansion.
+        $string = is_float($amount) ? sprintf('%.4F', $amount) : trim((string) $amount);
+
+        $negative = str_starts_with($string, '-');
+        $string = ltrim($string, '+-');
+
+        [$whole, $fraction] = array_pad(explode('.', $string, 2), 2, '');
+
+        // Keep three fractional digits (tenths of a cent) for half-up rounding.
+        $fraction = str_pad(substr($fraction, 0, 3), 3, '0');
+
+        $tenthsOfCents = ((int) $whole) * 1000 + (int) $fraction;
+        $minorUnits = intdiv($tenthsOfCents + 5, 10); // round half-up to cents
+
+        return new self($negative ? -$minorUnits : $minorUnits, $currency);
     }
 
     public static function zero(string $currency = 'USD'): self

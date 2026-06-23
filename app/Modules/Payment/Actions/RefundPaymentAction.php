@@ -30,7 +30,8 @@ final class RefundPaymentAction
      */
     public function execute(Payment $payment, ?Money $amount = null): Payment
     {
-        $refunded = DB::transaction(function () use ($payment, $amount): Payment {
+        /** @var array{0: Payment, 1: Money} $result */
+        $result = DB::transaction(function () use ($payment, $amount): array {
             $locked = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
 
             if (! $locked->status->isRefundable()) {
@@ -65,12 +66,14 @@ final class RefundPaymentAction
                 'gateway_response' => array_merge($locked->gateway_response ?? [], ['refunds' => $refunds]),
             ]);
 
-            return $locked;
+            return [$locked, $toRefund];
         });
 
+        [$refunded, $movedThisCall] = $result;
         $fresh = $refunded->refresh();
 
-        PaymentRefunded::dispatch($fresh, $amount ?? $fresh->refunded_amount);
+        // The event carries the amount moved THIS call (not the cumulative total).
+        PaymentRefunded::dispatch($fresh, $movedThisCall);
 
         return $fresh;
     }

@@ -50,27 +50,37 @@ class ProcessPaymentJob implements ShouldBeUnique, ShouldQueue
 
     public function handle(PaymentGatewayManager $manager): void
     {
-        $charged = DB::transaction(function () use ($manager): ?Payment {
-            $payment = Payment::query()->whereKey($this->payment->getKey())->lockForUpdate()->first();
+        $payment = Payment::query()->whereKey($this->payment->getKey())->first();
 
-            // Already processed (retry / redelivery / duplicate) — do not re-charge.
-            if ($payment === null || $payment->status !== PaymentStatus::Pending) {
+        // Already processed (retry / redelivery / duplicate) — do not re-charge.
+        if ($payment === null || $payment->status !== PaymentStatus::Pending) {
+            return;
+        }
+
+        // Call the gateway OUTSIDE any transaction so we never hold a row lock
+        // across a network round-trip. ShouldBeUnique guarantees a single job per
+        // payment, so there is no concurrent charge to guard against here.
+        $response = $manager->for($payment->method)->charge(new GatewayChargeData(
+            paymentId: (string) $payment->getKey(),
+            orderId: (int) $payment->order_id,
+            amount: $payment->amount,
+        ));
+
+        // Persist the outcome atomically, re-checking the guard under a row lock.
+        $charged = DB::transaction(function () use ($payment, $response): ?Payment {
+            $locked = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->first();
+
+            if ($locked === null || $locked->status !== PaymentStatus::Pending) {
                 return null;
             }
 
-            $response = $manager->for($payment->method)->charge(new GatewayChargeData(
-                paymentId: (string) $payment->getKey(),
-                orderId: (int) $payment->order_id,
-                amount: $payment->amount,
-            ));
-
-            $payment->update([
+            $locked->update([
                 'status' => $response->status,
                 'gateway_reference' => $response->reference,
                 'gateway_response' => $response->raw + ['message' => $response->message],
             ]);
 
-            return $payment;
+            return $locked;
         });
 
         if ($charged !== null) {

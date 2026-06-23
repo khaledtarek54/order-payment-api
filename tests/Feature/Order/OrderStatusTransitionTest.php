@@ -29,6 +29,17 @@ it('rejects an invalid transition from cancelled to confirmed with 422', functio
     expect($order->fresh()->status->value)->toBe('cancelled');
 });
 
+it('rejects a client attempt to mark an order paid (paid is system-only)', function (): void {
+    $user = actingAsUser();
+    $order = Order::factory()->confirmed()->create(['user_id' => $user->id]);
+
+    $this->patchJson("/api/v1/orders/{$order->id}/status", ['status' => 'paid'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('status');
+
+    expect($order->fresh()->status->value)->toBe('confirmed');
+});
+
 it('requires authentication to change status', function (): void {
     $order = Order::factory()->create();
 

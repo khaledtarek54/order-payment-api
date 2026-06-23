@@ -16,6 +16,14 @@ it('formats minor units as a fixed-point decimal string', function (): void {
         ->and(Money::fromMinorUnits(100000)->toDecimalString())->toBe('1000.00');
 });
 
+it('rounds sub-cent inputs half-up without float-representation error', function (): void {
+    // 1.005 as a double is 1.00499999…; a (float)*100 parse rounds it DOWN to 1.00.
+    expect(Money::fromDecimal('1.005')->minorUnits)->toBe(101)
+        ->and(Money::fromDecimal(1.005)->minorUnits)->toBe(101)
+        ->and(Money::fromDecimal('2.675')->minorUnits)->toBe(268)
+        ->and(Money::fromDecimal(2.675)->minorUnits)->toBe(268);
+});
+
 it('adds without floating-point error (the 0.1 + 0.2 trap)', function (): void {
     $sum = Money::fromDecimal(0.1)->plus(Money::fromDecimal(0.2));
 

@@ -20,7 +20,9 @@ class RefundPaymentRequest extends FormRequest
     {
         return [
             // Optional partial amount; omit to refund the full remaining balance.
-            'amount' => ['sometimes', 'numeric', 'min:0.01'],
+            // decimal:0,2 rejects sub-cent values so the amount can't be silently
+            // rounded to something other than what the caller requested.
+            'amount' => ['sometimes', 'numeric', 'min:0.01', 'decimal:0,2'],
         ];
     }
 

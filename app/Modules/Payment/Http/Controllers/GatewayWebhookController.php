@@ -40,7 +40,12 @@ class GatewayWebhookController extends ApiController
      */
     public function handle(GatewayWebhookRequest $request, string $gateway, SettlePaymentAction $settle): JsonResponse
     {
+        // Scope the lookup to the gateway whose secret just verified the
+        // signature — otherwise a webhook signed with one gateway's secret could
+        // settle a payment that belongs to a different gateway (gateway_reference
+        // is not globally unique).
         $payment = Payment::query()
+            ->where('method', $gateway)
             ->where('gateway_reference', $request->validated('reference'))
             ->first();
 

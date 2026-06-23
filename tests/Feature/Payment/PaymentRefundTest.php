@@ -45,6 +45,21 @@ it('partially refunds and then completes the refund', function (): void {
         ->assertJsonPath('data.refunded_amount', '100.00');
 });
 
+it('rejects a refund that exceeds the balance only by accumulation', function (): void {
+    $payment = successfulPaymentFor(actingAsUser(), 100.0);
+
+    $this->postJson("/api/v1/payments/{$payment->getKey()}/refund", ['amount' => 60])
+        ->assertOk()
+        ->assertJsonPath('data.status', 'partially_refunded');
+
+    // Remaining is 40, so a second 60 must be rejected (remaining = amount - refunded).
+    $this->postJson("/api/v1/payments/{$payment->getKey()}/refund", ['amount' => 60])
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'refund_exceeds_payment');
+
+    expect($payment->fresh()->refunded_amount->toDecimalString())->toBe('60.00');
+});
+
 it('rejects a refund that exceeds the remaining balance', function (): void {
     $payment = successfulPaymentFor(actingAsUser());
 

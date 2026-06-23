@@ -25,13 +25,16 @@ final class SyncOrderItemsAction
         $total = Money::zero();
 
         foreach ($items as $item) {
-            $lineTotal = Money::fromDecimal($item['unit_price'])->times((int) $item['quantity']);
+            $unitPrice = Money::fromDecimal($item['unit_price']);
+            $lineTotal = $unitPrice->times((int) $item['quantity']);
             $total = $total->plus($lineTotal);
 
             $order->items()->create([
                 'product_name' => $item['product_name'],
                 'quantity' => $item['quantity'],
-                'unit_price' => $item['unit_price'],
+                // Store the normalised unit price so unit_price * quantity always
+                // reconciles with line_total (no raw-vs-computed drift).
+                'unit_price' => $unitPrice->toDecimalString(),
                 'line_total' => $lineTotal->toDecimalString(),
             ]);
         }

@@ -44,6 +44,24 @@ final class ProcessPaymentAction
                 }
             }
 
+            // Duplicate-charge guard that does NOT depend on an Idempotency-Key:
+            // an order may have at most one in-flight/captured payment, so a
+            // double-click or lost-response retry during the async pending window
+            // replays the existing payment instead of charging again. A prior
+            // failed payment does not block a fresh attempt.
+            $active = $locked->payments()
+                ->whereIn('status', [
+                    PaymentStatus::Pending->value,
+                    PaymentStatus::Successful->value,
+                    PaymentStatus::PartiallyRefunded->value,
+                    PaymentStatus::Refunded->value,
+                ])
+                ->first();
+
+            if ($active !== null) {
+                return [$active, false];
+            }
+
             // Business rule applies only to a genuinely new payment.
             if (! $locked->isConfirmed()) {
                 throw new OrderNotConfirmedException;
