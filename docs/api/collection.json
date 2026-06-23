@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Laravel API Documentation",
-        "_postman_id": "f1cd41b5-4afc-490e-b050-bde97027c840",
+        "_postman_id": "d816b0cf-bf75-415c-a71a-520db9232e1b",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -269,6 +269,18 @@
                                 {
                                     "key": "content-type",
                                     "value": "application\/json"
+                                },
+                                {
+                                    "key": "x-ratelimit-limit",
+                                    "value": "60"
+                                },
+                                {
+                                    "key": "x-ratelimit-remaining",
+                                    "value": "59"
+                                },
+                                {
+                                    "key": "x-request-id",
+                                    "value": "9ae5636f-ab48-45b3-bd50-6fc0afbe1fba"
                                 },
                                 {
                                     "key": "access-control-allow-origin",
@@ -657,8 +669,82 @@
         },
         {
             "name": "Payments",
-            "description": "",
+            "description": "\nReceives asynchronous settlement callbacks from payment gateways. This is a\npublic endpoint (gateways hold no user token); its authenticity is proven by\nan HMAC signature, verified by the VerifyGatewaySignature middleware.",
             "item": [
+                {
+                    "name": "Handle a gateway webhook.",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/payments\/webhook\/:gateway",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/payments\/webhook\/:gateway",
+                            "variable": [
+                                {
+                                    "id": "gateway",
+                                    "key": "gateway",
+                                    "value": "credit_card",
+                                    "description": "The gateway key. One of: credit_card, paypal."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Signature",
+                                "value": "string required HMAC-SHA256 of the raw request body, keyed by the gateway webhook secret."
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"reference\":\"cc_abc123\",\"status\":\"successful\"}"
+                        },
+                        "description": "",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"message\":\"Webhook processed.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 202,
+                            "body": "{\"message\":\"Webhook acknowledged; no matching payment.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"message\":\"Invalid webhook signature.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"message\":\"Unknown payment gateway.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The webhook status must be either successful or failed.\"}",
+                            "name": ""
+                        }
+                    ]
+                },
                 {
                     "name": "List payments",
                     "request": {
@@ -710,7 +796,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": "019ef57e-1ba4-70e8-8039-df492eebf11d",
+                                    "value": "019ef653-02bc-7301-9259-37847e0af9c6",
                                     "description": "The ID of the payment."
                                 },
                                 {
@@ -752,6 +838,73 @@
                             "header": [],
                             "code": 404,
                             "body": "{\"message\":\"No query results for model [App\\\\Modules\\\\Payment\\\\Models\\\\Payment].\"}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Refund a payment",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/payments\/:payment_id\/refund",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/payments\/:payment_id\/refund",
+                            "variable": [
+                                {
+                                    "id": "payment_id",
+                                    "key": "payment_id",
+                                    "value": "019ef653-02bc-7301-9259-37847e0af9c6",
+                                    "description": "The ID of the payment."
+                                },
+                                {
+                                    "id": "payment",
+                                    "key": "payment",
+                                    "value": "9b1c2d3e-4f5a-6b7c-8d9e-0f1a2b3c4d5e",
+                                    "description": "The UUID of the payment."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"amount\":25}"
+                        },
+                        "description": "Refund a successful payment in full, or a partial amount. A payment can be\nrefunded repeatedly up to its total; over-refunds are rejected."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"data\":{\"id\":\"9b1c...\",\"order_id\":1,\"status\":\"refunded\",\"method\":\"credit_card\",\"amount\":\"100.00\",\"refunded_amount\":\"100.00\",\"gateway_reference\":\"cc_abc123\",\"created_at\":\"2026-06-23T12:00:00.000000Z\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"message\":\"This action is unauthorized.\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 409,
+                            "body": "{\"detail\":\"Only a successful payment can be refunded.\",\"code\":\"payment_not_refundable\"}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"detail\":\"The refund amount exceeds the remaining refundable balance.\",\"code\":\"refund_exceeds_payment\"}",
                             "name": ""
                         }
                     ]
@@ -840,6 +993,10 @@
                         },
                         "method": "POST",
                         "header": [
+                            {
+                                "key": "Idempotency-Key",
+                                "value": "A client-generated key (e.g. a UUID). Repeating a request with the same key returns the original payment instead of charging again. Example: 1f0a2b3c-4d5e-6f70-8a9b-0c1d2e3f4a5b"
+                            },
                             {
                                 "key": "Content-Type",
                                 "value": "application\/json"
