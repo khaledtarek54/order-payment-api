@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "Laravel API Documentation",
-        "_postman_id": "d816b0cf-bf75-415c-a71a-520db9232e1b",
+        "_postman_id": "47f3a053-6002-415b-a022-e9ac6fca3abe",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -280,7 +280,7 @@
                                 },
                                 {
                                     "key": "x-request-id",
-                                    "value": "9ae5636f-ab48-45b3-bd50-6fc0afbe1fba"
+                                    "value": "213119b2-8209-40ac-a044-c47bdcc8caf4"
                                 },
                                 {
                                     "key": "access-control-allow-origin",
@@ -796,7 +796,7 @@
                                 {
                                     "id": "id",
                                     "key": "id",
-                                    "value": "019ef653-02bc-7301-9259-37847e0af9c6",
+                                    "value": "019ef66f-4af8-70ed-a9d5-94097391f216",
                                     "description": "The ID of the payment."
                                 },
                                 {
@@ -854,7 +854,7 @@
                                 {
                                     "id": "payment_id",
                                     "key": "payment_id",
-                                    "value": "019ef653-02bc-7301-9259-37847e0af9c6",
+                                    "value": "019ef66f-4af8-70ed-a9d5-94097391f216",
                                     "description": "The ID of the payment."
                                 },
                                 {
