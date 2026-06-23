@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth\Http\Controllers;
 
+use App\Modules\Auth\Actions\RegisterUserAction;
 use App\Modules\Auth\Http\Requests\LoginRequest;
 use App\Modules\Auth\Http\Requests\RegisterRequest;
 use App\Modules\Auth\Http\Resources\UserResource;
-use App\Modules\Auth\Services\AuthService;
 use App\Support\Http\Controllers\ApiController;
 use App\Support\Http\Responses\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -33,9 +33,9 @@ class AuthController extends ApiController
      * @response 201 {"message":"Registration successful.","data":{"user":{"id":1,"name":"Jane Doe","email":"jane@example.com","created_at":"2026-06-23T00:00:00.000000Z"},"access_token":"eyJ0eXAi...","token_type":"bearer","expires_in":3600}}
      * @response 422 {"message":"This email address is already registered.","errors":{"email":["This email address is already registered."]}}
      */
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(RegisterRequest $request, RegisterUserAction $registerUser): JsonResponse
     {
-        $user = app(AuthService::class)->register($request->validated());
+        $user = $registerUser->execute($request->validated());
 
         /** @var JWTGuard $guard */
         $guard = auth('api');

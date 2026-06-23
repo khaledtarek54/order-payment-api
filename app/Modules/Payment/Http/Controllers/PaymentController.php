@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Payment\Http\Controllers;
 
 use App\Modules\Order\Models\Order;
+use App\Modules\Payment\Actions\ProcessPaymentAction;
 use App\Modules\Payment\Enums\PaymentMethod;
 use App\Modules\Payment\Http\Requests\ProcessPaymentRequest;
 use App\Modules\Payment\Http\Resources\PaymentResource;
 use App\Modules\Payment\Models\Payment;
-use App\Modules\Payment\Services\PaymentService;
 use App\Support\Http\Controllers\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -83,11 +83,14 @@ class PaymentController extends ApiController
      * @response 409 {"message":"The order must be confirmed before it can be paid."}
      * @response 422 {"message":"The selected payment method is not supported.","errors":{"method":["The selected payment method is not supported."]}}
      */
-    public function store(ProcessPaymentRequest $request, Order $order): JsonResponse
-    {
+    public function store(
+        ProcessPaymentRequest $request,
+        Order $order,
+        ProcessPaymentAction $processPayment,
+    ): JsonResponse {
         $this->authorize('view', $order);
 
-        $payment = app(PaymentService::class)->process(
+        $payment = $processPayment->execute(
             $order,
             PaymentMethod::from($request->validated()['method']),
         );
