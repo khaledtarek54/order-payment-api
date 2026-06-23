@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property PaymentStatus $status
  * @property PaymentMethod $method
  * @property Money $amount
+ * @property Money $refunded_amount
  * @property string|null $gateway_reference
  * @property array<string, mixed>|null $gateway_response
  * @property string|null $idempotency_key
@@ -38,6 +39,7 @@ class Payment extends Model
         'status',
         'method',
         'amount',
+        'refunded_amount',
         'gateway_reference',
         'gateway_response',
         'idempotency_key',
@@ -52,6 +54,7 @@ class Payment extends Model
             'status' => PaymentStatus::class,
             'method' => PaymentMethod::class,
             'amount' => MoneyCast::class,
+            'refunded_amount' => MoneyCast::class,
             'gateway_response' => 'array',
         ];
     }

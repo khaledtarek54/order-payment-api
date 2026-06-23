@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Payment\Gateways\Contracts;
 
 use App\Modules\Payment\Gateways\Data\GatewayChargeData;
+use App\Modules\Payment\Gateways\Data\GatewayRefundData;
 use App\Modules\Payment\Gateways\Data\GatewayResponse;
 
 /**
@@ -17,6 +18,8 @@ use App\Modules\Payment\Gateways\Data\GatewayResponse;
 interface PaymentGatewayInterface
 {
     public function charge(GatewayChargeData $data): GatewayResponse;
+
+    public function refund(GatewayRefundData $data): GatewayResponse;
 
     public function identifier(): string;
 

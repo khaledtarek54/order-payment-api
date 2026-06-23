@@ -7,6 +7,7 @@ namespace App\Modules\Payment\Gateways;
 use App\Modules\Payment\Gateways\Concerns\VerifiesWebhookSignature;
 use App\Modules\Payment\Gateways\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Gateways\Data\GatewayChargeData;
+use App\Modules\Payment\Gateways\Data\GatewayRefundData;
 use App\Modules\Payment\Gateways\Data\GatewayResponse;
 use Illuminate\Support\Str;
 
@@ -33,6 +34,21 @@ class CreditCardGateway implements PaymentGatewayInterface
             'gateway' => $this->identifier(),
             'amount' => $data->amount->toDecimalString(),
             'currency' => $data->amount->currency,
+        ]);
+    }
+
+    public function refund(GatewayRefundData $data): GatewayResponse
+    {
+        if (blank($this->config['key'] ?? null) || blank($this->config['secret'] ?? null)) {
+            return GatewayResponse::failed('Gateway credentials are not configured.', [
+                'gateway' => $this->identifier(),
+            ]);
+        }
+
+        return GatewayResponse::successful('rfnd_cc_'.Str::lower(Str::random(20)), [
+            'gateway' => $this->identifier(),
+            'reference' => $data->reference,
+            'refunded' => $data->amount->toDecimalString(),
         ]);
     }
 

@@ -6,11 +6,14 @@ namespace App\Modules\Payment\Http\Controllers;
 
 use App\Modules\Order\Models\Order;
 use App\Modules\Payment\Actions\ProcessPaymentAction;
+use App\Modules\Payment\Actions\RefundPaymentAction;
 use App\Modules\Payment\Enums\PaymentMethod;
 use App\Modules\Payment\Http\Requests\ProcessPaymentRequest;
+use App\Modules\Payment\Http\Requests\RefundPaymentRequest;
 use App\Modules\Payment\Http\Resources\PaymentResource;
 use App\Modules\Payment\Models\Payment;
 use App\Support\Http\Controllers\ApiController;
+use App\Support\ValueObjects\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -117,6 +120,36 @@ class PaymentController extends ApiController
     public function show(Payment $payment): PaymentResource
     {
         $this->authorize('view', $payment->order);
+
+        return new PaymentResource($payment->load('order'));
+    }
+
+    /**
+     * Refund a payment
+     *
+     * Refund a successful payment in full, or a partial amount. A payment can be
+     * refunded repeatedly up to its total; over-refunds are rejected.
+     *
+     * @authenticated
+     *
+     * @urlParam payment string required The UUID of the payment. Example: 9b1c2d3e-4f5a-6b7c-8d9e-0f1a2b3c4d5e
+     *
+     * @bodyParam amount number An optional partial amount; omit to refund the full remaining balance. Example: 25.00
+     *
+     * @response 200 {"data":{"id":"9b1c...","order_id":1,"status":"refunded","method":"credit_card","amount":"100.00","refunded_amount":"100.00","gateway_reference":"cc_abc123","created_at":"2026-06-23T12:00:00.000000Z"}}
+     * @response 403 {"message":"This action is unauthorized."}
+     * @response 409 {"detail":"Only a successful payment can be refunded.","code":"payment_not_refundable"}
+     * @response 422 {"detail":"The refund amount exceeds the remaining refundable balance.","code":"refund_exceeds_payment"}
+     */
+    public function refund(RefundPaymentRequest $request, Payment $payment, RefundPaymentAction $refund): PaymentResource
+    {
+        $this->authorize('view', $payment->order);
+
+        $amount = $request->validated('amount') !== null
+            ? Money::fromDecimal($request->validated('amount'))
+            : null;
+
+        $payment = $refund->execute($payment, $amount);
 
         return new PaymentResource($payment->load('order'));
     }

@@ -16,6 +16,7 @@ Route::post('payments/webhook/{gateway}', [GatewayWebhookController::class, 'han
 Route::middleware('auth:api')->group(function (): void {
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('payments/{payment}/refund', [PaymentController::class, 'refund'])->name('payments.refund');
 
     Route::get('orders/{order}/payments', [PaymentController::class, 'indexForOrder'])
         ->name('orders.payments.index');

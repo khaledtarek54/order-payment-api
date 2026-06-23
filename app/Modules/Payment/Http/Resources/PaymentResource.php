@@ -24,6 +24,7 @@ class PaymentResource extends JsonResource
             'status' => $this->status->value,
             'method' => $this->method->value,
             'amount' => $this->amount->toDecimalString(),
+            'refunded_amount' => $this->refunded_amount->toDecimalString(),
             'gateway_reference' => $this->gateway_reference,
             'created_at' => $this->created_at,
         ];

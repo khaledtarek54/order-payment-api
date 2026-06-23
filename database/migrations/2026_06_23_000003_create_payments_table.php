@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('status')->default('pending')->index();
             $table->string('method')->index();
             $table->decimal('amount', 12, 2);
+            $table->decimal('refunded_amount', 12, 2)->default(0);
             $table->string('gateway_reference')->nullable();
             $table->json('gateway_response')->nullable();
             // Client-supplied Idempotency-Key; unique per order so a retried or
