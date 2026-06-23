@@ -1499,7 +1499,7 @@ paths:
         in: path
         name: id
         description: 'The ID of the payment.'
-        example: 019ef653-02bc-7301-9259-37847e0af9c6
+        example: 019ef66f-4af8-70ed-a9d5-94097391f216
         required: true
         schema:
           type: string
@@ -1624,7 +1624,7 @@ paths:
         in: path
         name: payment_id
         description: 'The ID of the payment.'
-        example: 019ef653-02bc-7301-9259-37847e0af9c6
+        example: 019ef66f-4af8-70ed-a9d5-94097391f216
         required: true
         schema:
           type: string
