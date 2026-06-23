@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('gateway_reference')->nullable();
             $table->json('gateway_response')->nullable();
             $table->timestamps();
+
+            // Both list paths order a single order's payments by recency.
+            $table->index(['order_id', 'created_at']);
         });
     }
 

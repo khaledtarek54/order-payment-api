@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Order\Models\Order;
 use App\Modules\Payment\Enums\PaymentStatus;
 use App\Modules\Payment\Models\Payment;
@@ -51,6 +52,23 @@ it('processes a payment for a confirmed order', function (): void {
         'order_id' => $order->getKey(),
         'status' => PaymentStatus::Successful->value,
     ]);
+
+    // A successful payment advances the order to the paid state.
+    expect($order->fresh()->status)->toBe(OrderStatus::Paid);
+});
+
+it('leaves the order confirmed when the payment fails', function (): void {
+    $user = actingAsUser();
+    $order = confirmedOrderFor($user);
+
+    config()->set('payments.gateways.credit_card.key', '');
+    config()->set('payments.gateways.credit_card.secret', '');
+
+    $this->postJson("/api/v1/orders/{$order->getKey()}/payments", ['method' => 'credit_card'])
+        ->assertCreated()
+        ->assertJsonPath('data.status', 'failed');
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Confirmed);
 });
 
 it('records a failed payment when gateway credentials are missing', function (): void {
