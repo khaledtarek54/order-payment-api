@@ -42,12 +42,14 @@ return [
             'class' => CreditCardGateway::class,
             'key' => env('CREDIT_CARD_API_KEY'),
             'secret' => env('CREDIT_CARD_API_SECRET'),
+            'webhook_secret' => env('CREDIT_CARD_WEBHOOK_SECRET'),
         ],
 
         'paypal' => [
             'class' => PaypalGateway::class,
             'client_id' => env('PAYPAL_CLIENT_ID'),
             'secret' => env('PAYPAL_SECRET'),
+            'webhook_secret' => env('PAYPAL_WEBHOOK_SECRET'),
         ],
 
     ],

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Payment\Gateways;
 
+use App\Modules\Payment\Gateways\Concerns\VerifiesWebhookSignature;
 use App\Modules\Payment\Gateways\Contracts\PaymentGatewayInterface;
 use App\Modules\Payment\Gateways\Data\GatewayChargeData;
 use App\Modules\Payment\Gateways\Data\GatewayResponse;
@@ -11,6 +12,8 @@ use Illuminate\Support\Str;
 
 class PaypalGateway implements PaymentGatewayInterface
 {
+    use VerifiesWebhookSignature;
+
     /**
      * @param  array<string, mixed>  $config  Credentials from config/payments.php.
      */

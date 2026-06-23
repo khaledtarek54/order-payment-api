@@ -19,4 +19,11 @@ interface PaymentGatewayInterface
     public function charge(GatewayChargeData $data): GatewayResponse;
 
     public function identifier(): string;
+
+    /**
+     * Verify an inbound webhook's signature against the raw request body, using
+     * the gateway's configured secret. Implementations MUST use a timing-safe
+     * comparison (hash_equals) to resist timing attacks.
+     */
+    public function verifySignature(string $payload, string $signature): bool;
 }
