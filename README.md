@@ -60,6 +60,8 @@ php artisan key:generate
 php artisan jwt:secret        # generates JWT_SECRET (skip if already set)
 
 # 3. Database (SQLite by default) + demo data
+#    Create the SQLite file first (migrate won't auto-create it):
+php -r "file_exists('database/database.sqlite') || touch('database/database.sqlite');"
 php artisan migrate --seed
 
 # 4. Serve
