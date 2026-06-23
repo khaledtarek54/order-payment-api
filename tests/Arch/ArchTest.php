@@ -63,3 +63,39 @@ arch('enums are backed string enums')
         'App\Modules\Payment\Enums',
     ])
     ->toBeStringBackedEnums();
+
+/*
+|--------------------------------------------------------------------------
+| Module boundary rules
+|--------------------------------------------------------------------------
+|
+| These enforce the dependency directions that keep the modules decoupled.
+| (We intentionally allow the Order<->Payment Eloquent relationship at the
+| persistence layer — forcing a strict repository ACL between two aggregates
+| that share a foreign key would be over-engineering for this monolith.)
+|
+*/
+
+arch('payment gateways stay pure — no Eloquent models leak into the gateway layer')
+    ->expect('App\Modules\Payment\Gateways')
+    ->not->toUse(['App\Modules\Payment\Models', 'App\Modules\Order\Models']);
+
+arch('the shared Support layer never depends on a feature module')
+    ->expect('App\Support')
+    ->not->toUse('App\Modules');
+
+arch('actions and queries never reach into the HTTP layer')
+    ->expect([
+        'App\Modules\Order\Actions',
+        'App\Modules\Payment\Actions',
+        'App\Modules\Order\Queries',
+    ])
+    ->not->toUse(['App\Modules\Order\Http', 'App\Modules\Payment\Http']);
+
+arch('the payment module does not reach into the order HTTP layer')
+    ->expect('App\Modules\Payment')
+    ->not->toUse('App\Modules\Order\Http');
+
+arch('the order module does not reach into the payment HTTP layer')
+    ->expect('App\Modules\Order')
+    ->not->toUse('App\Modules\Payment\Http');
