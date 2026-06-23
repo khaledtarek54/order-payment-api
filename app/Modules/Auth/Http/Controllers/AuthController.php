@@ -64,7 +64,7 @@ class AuthController extends ApiController
         $guard = auth('api');
 
         if (! $token = $guard->attempt($credentials)) {
-            return ApiResponse::error('Invalid credentials.', 401);
+            return ApiResponse::problem(401, 'Invalid credentials.', 'invalid_credentials');
         }
 
         return $this->respondWithToken($token, 'Login successful.');

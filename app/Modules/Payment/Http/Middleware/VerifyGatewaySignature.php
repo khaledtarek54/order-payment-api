@@ -6,6 +6,7 @@ namespace App\Modules\Payment\Http\Middleware;
 
 use App\Modules\Payment\Exceptions\UnsupportedPaymentMethodException;
 use App\Modules\Payment\Gateways\PaymentGatewayManager;
+use App\Support\Http\Responses\ApiResponse;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,13 +27,17 @@ final class VerifyGatewaySignature
         try {
             $gateway = $this->gateways->for((string) $request->route('gateway'));
         } catch (UnsupportedPaymentMethodException) {
-            abort(Response::HTTP_NOT_FOUND, 'Unknown payment gateway.');
+            return ApiResponse::problem(Response::HTTP_NOT_FOUND, 'Unknown payment gateway.', 'unknown_gateway');
         }
 
         $signature = (string) $request->header(self::SIGNATURE_HEADER, '');
 
         if (! $gateway->verifySignature($request->getContent(), $signature)) {
-            abort(Response::HTTP_UNAUTHORIZED, 'Invalid webhook signature.');
+            return ApiResponse::problem(
+                Response::HTTP_UNAUTHORIZED,
+                'Invalid webhook signature.',
+                'invalid_webhook_signature',
+            );
         }
 
         return $next($request);
