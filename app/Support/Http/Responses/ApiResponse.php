@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Support\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Tiny helper to keep success/error envelopes consistent across the API.
@@ -45,16 +47,45 @@ final class ApiResponse
     }
 
     /**
+     * Error envelope. Errors are emitted as RFC 7807 problem documents.
+     *
      * @param  array<string, mixed>  $errors
      */
     public static function error(string $message, int $status = 400, array $errors = []): JsonResponse
     {
-        $payload = ['message' => $message];
+        return self::problem($status, $message, errors: $errors);
+    }
+
+    /**
+     * Build an RFC 7807 (application/problem+json) error response.
+     *
+     * @param  array<string, mixed>  $errors  Field-level validation errors, if any.
+     */
+    public static function problem(
+        int $status,
+        string $detail,
+        ?string $code = null,
+        array $errors = [],
+        ?string $title = null,
+    ): JsonResponse {
+        $title ??= Response::$statusTexts[$status] ?? 'Error';
+
+        $payload = [
+            'type' => '/problems/'.($code ?? Str::slug($title)),
+            'title' => $title,
+            'status' => $status,
+            'detail' => $detail,
+        ];
+
+        if ($code !== null) {
+            $payload['code'] = $code;
+        }
 
         if ($errors !== []) {
             $payload['errors'] = $errors;
         }
 
-        return response()->json($payload, $status);
+        return response()->json($payload, $status)
+            ->header('Content-Type', 'application/problem+json');
     }
 }

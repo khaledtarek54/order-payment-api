@@ -21,7 +21,7 @@ class OrderResource extends JsonResource
         return [
             'id' => $this->id,
             'status' => $this->status->value,
-            'total' => $this->total,
+            'total' => $this->total->toDecimalString(),
             'notes' => $this->notes,
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
             'payments_count' => $this->whenCounted('payments'),

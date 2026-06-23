@@ -36,6 +36,16 @@ A Laravel 13 REST API for managing **orders** and processing **payments**, secur
 
 ---
 
+## Engineering highlights
+
+- **Action pattern (CQRS-lite):** single-responsibility actions (`CreateOrderAction`, `ProcessPaymentAction`, …) with a read-side `ListOrdersQuery`; controllers inject exactly what each endpoint needs.
+- **`Money` value object:** all monetary math in integer minor units — no float rounding.
+- **Idempotent payments:** an `Idempotency-Key` + unique constraint + row lock, and an exactly-once-effect queue job (`ShouldBeUnique`, retries, "still pending?" guard) — no double charges from retries/redeliveries.
+- **Pluggable gateways (Strategy)** with **HMAC-verified settlement webhooks**, and **refunds** as first-class money movement (partial/full, over-refund guards).
+- **RFC 7807 problem+json** errors with stable machine-readable `code`s.
+- **Operability:** per-request correlation IDs propagated into queued jobs (Context facade), a wired rate limiter, composite indexes for the hot queries.
+- **Enforced architecture:** Pest `arch()` tests keep gateways pure, the Support layer module-agnostic, and the modules out of each other's HTTP layer.
+
 ## Tech stack
 
 - **Laravel 13** (PHP 8.4) · **Pest 4** tests · **PSR-12** via Laravel Pint · **Larastan** (PHPStan level 5)
@@ -151,7 +161,9 @@ All routes are prefixed with `/api/v1`. 🔒 = requires Bearer token.
 - `GET /payments` — all payments across the user's orders
 - `GET /payments/{payment}`
 - `GET /orders/{order}/payments` — payments for one order
-- `POST /orders/{order}/payments` — process a payment (**409** if the order isn't confirmed)
+- `POST /orders/{order}/payments` — process a payment (**409** if the order isn't confirmed). Send an `Idempotency-Key` header to make retries safe — a repeated key returns the original payment, never a second charge.
+- `POST /payments/{payment}/refund` — full or partial refund (`{"amount": 25.00}`); **409** if not refundable, **422** on over-refund
+- `POST /payments/webhook/{gateway}` — **public** gateway settlement callback, authenticated by an `X-Signature` HMAC (no bearer token)
 
 Standard codes: `200/201` success, `204` delete, `401` unauthenticated, `403` not owner, `404` not found, `409` business-rule conflict, `422` validation.
 

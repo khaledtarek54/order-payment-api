@@ -21,7 +21,14 @@ class UpdateOrderStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', Rule::enum(OrderStatus::class)],
+            // Clients may only confirm or cancel. `paid` is reached ONLY through
+            // the payment flow (the listener calls the action directly), so it is
+            // deliberately excluded here — otherwise an owner could mark their own
+            // order paid without paying.
+            'status' => ['required', Rule::enum(OrderStatus::class)->only([
+                OrderStatus::Confirmed,
+                OrderStatus::Cancelled,
+            ])],
         ];
     }
 

@@ -13,7 +13,7 @@ tags:
   - name: Orders
     description: "\nCreate, browse, and manage the authenticated user's orders. Totals are always\ncomputed server-side from the supplied line items."
   - name: Payments
-    description: ''
+    description: "\nReceives asynchronous settlement callbacks from payment gateways. This is a\npublic endpoint (gateways hold no user token); its authenticity is proven by\nan HMAC signature, verified by the VerifyGatewaySignature middleware."
 paths:
   /api/v1/auth/register:
     post:
@@ -1209,6 +1209,110 @@ paths:
         required: true
         schema:
           type: integer
+  '/api/v1/payments/webhook/{gateway}':
+    post:
+      summary: 'Handle a gateway webhook.'
+      operationId: handleAGatewayWebhook
+      description: ''
+      parameters:
+        -
+          in: header
+          name: X-Signature
+          description: ''
+          example: 'string required HMAC-SHA256 of the raw request body, keyed by the gateway webhook secret.'
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Webhook processed.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Webhook processed.'
+        202:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Webhook acknowledged; no matching payment.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Webhook acknowledged; no matching payment.'
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Invalid webhook signature.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Invalid webhook signature.'
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'Unknown payment gateway.'
+                properties:
+                  message:
+                    type: string
+                    example: 'Unknown payment gateway.'
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'The webhook status must be either successful or failed.'
+                properties:
+                  message:
+                    type: string
+                    example: 'The webhook status must be either successful or failed.'
+      tags:
+        - Payments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reference:
+                  type: string
+                  description: 'The gateway reference of the payment to settle.'
+                  example: cc_abc123
+                status:
+                  type: string
+                  description: 'The settled status. One of: successful, failed.'
+                  example: successful
+              required:
+                - reference
+                - status
+      security: []
+    parameters:
+      -
+        in: path
+        name: gateway
+        description: 'The gateway key. One of: credit_card, paypal.'
+        example: credit_card
+        required: true
+        schema:
+          type: string
   /api/v1/payments:
     get:
       summary: 'List payments'
@@ -1395,7 +1499,132 @@ paths:
         in: path
         name: id
         description: 'The ID of the payment.'
-        example: 019ef57e-1ba4-70e8-8039-df492eebf11d
+        example: 019ef653-02bc-7301-9259-37847e0af9c6
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: payment
+        description: 'The UUID of the payment.'
+        example: 9b1c2d3e-4f5a-6b7c-8d9e-0f1a2b3c4d5e
+        required: true
+        schema:
+          type: string
+  '/api/v1/payments/{payment_id}/refund':
+    post:
+      summary: 'Refund a payment'
+      operationId: refundAPayment
+      description: "Refund a successful payment in full, or a partial amount. A payment can be\nrefunded repeatedly up to its total; over-refunds are rejected."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 9b1c...
+                    order_id: 1
+                    status: refunded
+                    method: credit_card
+                    amount: '100.00'
+                    refunded_amount: '100.00'
+                    gateway_reference: cc_abc123
+                    created_at: '2026-06-23T12:00:00.000000Z'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 9b1c...
+                      order_id:
+                        type: integer
+                        example: 1
+                      status:
+                        type: string
+                        example: refunded
+                      method:
+                        type: string
+                        example: credit_card
+                      amount:
+                        type: string
+                        example: '100.00'
+                      refunded_amount:
+                        type: string
+                        example: '100.00'
+                      gateway_reference:
+                        type: string
+                        example: cc_abc123
+                      created_at:
+                        type: string
+                        example: '2026-06-23T12:00:00.000000Z'
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  message: 'This action is unauthorized.'
+                properties:
+                  message:
+                    type: string
+                    example: 'This action is unauthorized.'
+        409:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  detail: 'Only a successful payment can be refunded.'
+                  code: payment_not_refundable
+                properties:
+                  detail:
+                    type: string
+                    example: 'Only a successful payment can be refunded.'
+                  code:
+                    type: string
+                    example: payment_not_refundable
+        422:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  detail: 'The refund amount exceeds the remaining refundable balance.'
+                  code: refund_exceeds_payment
+                properties:
+                  detail:
+                    type: string
+                    example: 'The refund amount exceeds the remaining refundable balance.'
+                  code:
+                    type: string
+                    example: refund_exceeds_payment
+      tags:
+        - Payments
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  description: 'An optional partial amount; omit to refund the full remaining balance.'
+                  example: 25.0
+    parameters:
+      -
+        in: path
+        name: payment_id
+        description: 'The ID of the payment.'
+        example: 019ef653-02bc-7301-9259-37847e0af9c6
         required: true
         schema:
           type: string
@@ -1531,7 +1760,14 @@ paths:
       summary: 'Process a payment'
       operationId: processAPayment
       description: "Process a payment for a confirmed order. The order must be confirmed before\nit can be paid, otherwise a 409 is returned."
-      parameters: []
+      parameters:
+        -
+          in: header
+          name: Idempotency-Key
+          description: ''
+          example: 'A client-generated key (e.g. a UUID). Repeating a request with the same key returns the original payment instead of charging again. Example: 1f0a2b3c-4d5e-6f70-8a9b-0c1d2e3f4a5b'
+          schema:
+            type: string
       responses:
         201:
           description: ''

@@ -4,43 +4,105 @@ declare(strict_types=1);
 
 namespace App\Modules\Payment\Jobs;
 
+use App\Modules\Payment\Enums\PaymentStatus;
 use App\Modules\Payment\Events\PaymentProcessed;
 use App\Modules\Payment\Gateways\Data\GatewayChargeData;
 use App\Modules\Payment\Gateways\PaymentGatewayManager;
 use App\Modules\Payment\Models\Payment;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
- * Runs the gateway charge off the request cycle. With QUEUE_CONNECTION=sync
- * (the default for easy testing/demo) it executes inline; switch to the
- * `database` connection + a worker for true async processing — no code change.
+ * Runs the gateway charge off the request cycle.
+ *
+ * Reliability under at-least-once delivery: the job is unique per payment
+ * (ShouldBeUnique) and retried with backoff, and handle() re-reads the payment
+ * under a row lock and only charges while it is still Pending — so a retry,
+ * redelivery, or duplicate dispatch can never charge the same payment twice.
  */
-class ProcessPaymentJob implements ShouldQueue
+class ProcessPaymentJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 3;
+
     public function __construct(public Payment $payment) {}
+
+    /** One in-flight job per payment. */
+    public function uniqueId(): string
+    {
+        return (string) $this->payment->getKey();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [10, 30, 60];
+    }
 
     public function handle(PaymentGatewayManager $manager): void
     {
-        $payment = $this->payment;
+        $payment = Payment::query()->whereKey($this->payment->getKey())->first();
 
+        // Already processed (retry / redelivery / duplicate) — do not re-charge.
+        if ($payment === null || $payment->status !== PaymentStatus::Pending) {
+            return;
+        }
+
+        // Call the gateway OUTSIDE any transaction so we never hold a row lock
+        // across a network round-trip. ShouldBeUnique guarantees a single job per
+        // payment, so there is no concurrent charge to guard against here.
         $response = $manager->for($payment->method)->charge(new GatewayChargeData(
             paymentId: (string) $payment->getKey(),
             orderId: (int) $payment->order_id,
-            amount: (float) $payment->amount,
+            amount: $payment->amount,
         ));
 
-        $payment->update([
-            'status' => $response->status,
-            'gateway_reference' => $response->reference,
-            'gateway_response' => $response->raw + ['message' => $response->message],
-        ]);
+        // Persist the outcome atomically, re-checking the guard under a row lock.
+        $charged = DB::transaction(function () use ($payment, $response): ?Payment {
+            $locked = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->first();
 
-        PaymentProcessed::dispatch($payment->refresh());
+            if ($locked === null || $locked->status !== PaymentStatus::Pending) {
+                return null;
+            }
+
+            $locked->update([
+                'status' => $response->status,
+                'gateway_reference' => $response->reference,
+                'gateway_response' => $response->raw + ['message' => $response->message],
+            ]);
+
+            return $locked;
+        });
+
+        if ($charged !== null) {
+            PaymentProcessed::dispatch($charged->refresh());
+        }
+    }
+
+    /**
+     * Exhausted retries (or a thrown gateway error): record the failure so the
+     * payment never sticks on Pending.
+     */
+    public function failed(?Throwable $e): void
+    {
+        $payment = $this->payment->fresh();
+
+        if ($payment !== null && $payment->status === PaymentStatus::Pending) {
+            $payment->update([
+                'status' => PaymentStatus::Failed,
+                'gateway_response' => ['error' => $e?->getMessage() ?? 'Payment processing failed.'],
+            ]);
+
+            PaymentProcessed::dispatch($payment->refresh());
+        }
     }
 }

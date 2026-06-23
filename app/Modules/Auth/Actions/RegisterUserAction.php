@@ -2,19 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Services;
+namespace App\Modules\Auth\Actions;
 
 use App\Models\User;
 
-class AuthService
+/**
+ * Registers a new user. The password is hashed automatically by the model's
+ * `hashed` cast.
+ */
+final class RegisterUserAction
 {
     /**
-     * Register a new user. The password is hashed automatically by the
-     * model's `hashed` cast.
-     *
      * @param  array{name: string, email: string, password: string}  $data
      */
-    public function register(array $data): User
+    public function execute(array $data): User
     {
         return User::create([
             'name' => $data['name'],

@@ -116,7 +116,8 @@ it('rejects login with invalid credentials', function (): void {
     ]);
 
     $response->assertStatus(401)
-        ->assertJsonPath('message', 'Invalid credentials.');
+        ->assertJsonPath('detail', 'Invalid credentials.')
+        ->assertJsonPath('code', 'invalid_credentials');
 });
 
 it('rejects login when validation fails', function (): void {

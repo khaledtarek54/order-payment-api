@@ -24,7 +24,12 @@ final class OrderCache
 
     public static function bump(int $userId): void
     {
-        Cache::forever(self::versionKey($userId), self::version($userId) + 1);
+        $key = self::versionKey($userId);
+
+        // Atomic bump: seed the key if absent (no-op if present), then increment.
+        // Avoids the lost-update race of a get-then-set under concurrent writes.
+        Cache::add($key, 1);
+        Cache::increment($key);
     }
 
     public static function listKey(int $userId, string $fingerprint): string

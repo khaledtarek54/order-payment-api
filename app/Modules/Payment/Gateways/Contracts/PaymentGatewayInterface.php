@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Payment\Gateways\Contracts;
 
 use App\Modules\Payment\Gateways\Data\GatewayChargeData;
+use App\Modules\Payment\Gateways\Data\GatewayRefundData;
 use App\Modules\Payment\Gateways\Data\GatewayResponse;
 
 /**
@@ -18,5 +19,14 @@ interface PaymentGatewayInterface
 {
     public function charge(GatewayChargeData $data): GatewayResponse;
 
+    public function refund(GatewayRefundData $data): GatewayResponse;
+
     public function identifier(): string;
+
+    /**
+     * Verify an inbound webhook's signature against the raw request body, using
+     * the gateway's configured secret. Implementations MUST use a timing-safe
+     * comparison (hash_equals) to resist timing attacks.
+     */
+    public function verifySignature(string $payload, string $signature): bool;
 }

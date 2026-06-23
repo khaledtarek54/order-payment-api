@@ -20,10 +20,12 @@ class StoreOrderRequest extends FormRequest
     {
         return [
             'notes' => ['nullable', 'string', 'max:1000'],
-            'items' => ['required', 'array', 'min:1'],
+            'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.product_name' => ['required', 'string', 'max:255'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+            // Bounded so quantity * price can't overflow integer minor units or
+            // exceed the decimal(12,2) column range; unit_price is 2-dp exact.
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:100000'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0', 'max:1000000', 'decimal:0,2'],
         ];
     }
 

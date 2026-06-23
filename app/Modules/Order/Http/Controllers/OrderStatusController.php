@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Order\Http\Controllers;
 
+use App\Modules\Order\Actions\ChangeOrderStatusAction;
 use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Order\Http\Requests\UpdateOrderStatusRequest;
 use App\Modules\Order\Http\Resources\OrderResource;
 use App\Modules\Order\Models\Order;
-use App\Modules\Order\Services\OrderService;
 use App\Support\Http\Controllers\ApiController;
 
 /**
@@ -18,8 +18,6 @@ use App\Support\Http\Controllers\ApiController;
  */
 class OrderStatusController extends ApiController
 {
-    public function __construct(private readonly OrderService $service) {}
-
     /**
      * Change an order's status.
      *
@@ -37,11 +35,14 @@ class OrderStatusController extends ApiController
      * @response 403 {"message":"This action is unauthorized."}
      * @response 422 {"message":"Cannot change order status from 'cancelled' to 'confirmed'."}
      */
-    public function update(UpdateOrderStatusRequest $request, Order $order): OrderResource
-    {
+    public function update(
+        UpdateOrderStatusRequest $request,
+        Order $order,
+        ChangeOrderStatusAction $changeStatus,
+    ): OrderResource {
         $this->authorize('update', $order);
 
-        $order = $this->service->changeStatus(
+        $order = $changeStatus->execute(
             $order,
             OrderStatus::from($request->validated()['status']),
         );

@@ -62,6 +62,11 @@
         "stan": "phpstan analyse --memory-limit=1G",
         "pint": "pint",
         "lint": "pint --test",
+        "ci": [
+            "@lint",
+            "@stan",
+            "@test"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

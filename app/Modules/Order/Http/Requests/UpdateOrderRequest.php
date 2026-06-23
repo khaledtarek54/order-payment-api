@@ -20,10 +20,10 @@ class UpdateOrderRequest extends FormRequest
     {
         return [
             'notes' => ['nullable', 'string', 'max:1000'],
-            'items' => ['sometimes', 'array', 'min:1'],
+            'items' => ['sometimes', 'array', 'min:1', 'max:100'],
             'items.*.product_name' => ['required_with:items', 'string', 'max:255'],
-            'items.*.quantity' => ['required_with:items', 'integer', 'min:1'],
-            'items.*.unit_price' => ['required_with:items', 'numeric', 'min:0'],
+            'items.*.quantity' => ['required_with:items', 'integer', 'min:1', 'max:100000'],
+            'items.*.unit_price' => ['required_with:items', 'numeric', 'min:0', 'max:1000000', 'decimal:0,2'],
         ];
     }
 

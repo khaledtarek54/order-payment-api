@@ -7,6 +7,8 @@ namespace App\Modules\Order\Models;
 use App\Models\User;
 use App\Modules\Order\Enums\OrderStatus;
 use App\Modules\Payment\Models\Payment;
+use App\Support\Casts\MoneyCast;
+use App\Support\ValueObjects\Money;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +20,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int $user_id
  * @property OrderStatus $status
- * @property string $total
+ * @property Money $total
  * @property string|null $notes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -42,7 +44,7 @@ class Order extends Model
     {
         return [
             'status' => OrderStatus::class,
-            'total' => 'decimal:2',
+            'total' => MoneyCast::class,
         ];
     }
 

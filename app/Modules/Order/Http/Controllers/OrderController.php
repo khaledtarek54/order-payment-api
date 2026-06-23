@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Order\Http\Controllers;
 
+use App\Modules\Order\Actions\CreateOrderAction;
+use App\Modules\Order\Actions\DeleteOrderAction;
+use App\Modules\Order\Actions\UpdateOrderAction;
 use App\Modules\Order\Http\Requests\StoreOrderRequest;
 use App\Modules\Order\Http\Requests\UpdateOrderRequest;
 use App\Modules\Order\Http\Resources\OrderResource;
 use App\Modules\Order\Models\Order;
-use App\Modules\Order\Services\OrderService;
+use App\Modules\Order\Queries\ListOrdersQuery;
 use App\Support\Http\Controllers\ApiController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,8 +26,6 @@ use Illuminate\Http\Response;
  */
 class OrderController extends ApiController
 {
-    public function __construct(private readonly OrderService $service) {}
-
     /**
      * List orders.
      *
@@ -40,7 +41,7 @@ class OrderController extends ApiController
      * @response 200 {"data":[{"id":1,"status":"pending","total":"49.98","notes":null,"items":[{"id":1,"product_name":"Widget","quantity":2,"unit_price":"24.99","line_total":"49.98"}],"created_at":"2026-06-23T00:00:00.000000Z","updated_at":"2026-06-23T00:00:00.000000Z"}],"links":{"first":"...","last":"...","prev":null,"next":null},"meta":{"current_page":1,"last_page":1,"per_page":15,"total":1}}
      * @response 401 {"message":"Unauthenticated."}
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request, ListOrdersQuery $orders): AnonymousResourceCollection
     {
         $this->authorize('viewAny', Order::class);
 
@@ -48,7 +49,7 @@ class OrderController extends ApiController
         $fingerprint = md5((string) $request->getQueryString());
 
         return OrderResource::collection(
-            $this->service->paginate($request->user(), $perPage, $fingerprint),
+            $orders->execute($request->user(), $perPage, $fingerprint),
         );
     }
 
@@ -70,11 +71,11 @@ class OrderController extends ApiController
      * @response 401 {"message":"Unauthenticated."}
      * @response 422 {"message":"At least one order item is required.","errors":{"items":["At least one order item is required."]}}
      */
-    public function store(StoreOrderRequest $request): JsonResponse
+    public function store(StoreOrderRequest $request, CreateOrderAction $createOrder): JsonResponse
     {
         $this->authorize('create', Order::class);
 
-        $order = $this->service->create($request->user(), $request->validated());
+        $order = $createOrder->execute($request->user(), $request->validated());
 
         return (new OrderResource($order))->response()->setStatusCode(201);
     }
@@ -121,11 +122,11 @@ class OrderController extends ApiController
      * @response 403 {"message":"This action is unauthorized."}
      * @response 422 {"message":"At least one order item is required when updating items.","errors":{"items":["At least one order item is required when updating items."]}}
      */
-    public function update(UpdateOrderRequest $request, Order $order): OrderResource
+    public function update(UpdateOrderRequest $request, Order $order, UpdateOrderAction $updateOrder): OrderResource
     {
         $this->authorize('update', $order);
 
-        return new OrderResource($this->service->update($order, $request->validated()));
+        return new OrderResource($updateOrder->execute($order, $request->validated()));
     }
 
     /**
@@ -143,11 +144,11 @@ class OrderController extends ApiController
      * @response 403 {"message":"This action is unauthorized."}
      * @response 409 {"message":"Order cannot be deleted because it has associated payments."}
      */
-    public function destroy(Order $order): Response
+    public function destroy(Order $order, DeleteOrderAction $deleteOrder): Response
     {
         $this->authorize('delete', $order);
 
-        $this->service->delete($order);
+        $deleteOrder->execute($order);
 
         return response()->noContent();
     }
